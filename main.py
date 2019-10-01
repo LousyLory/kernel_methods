@@ -19,9 +19,6 @@ K = np.dot(random_matrix, random_matrix.transpose())
 N = 30 # number of smaples
 X, K = random_data(N)
 
-# check for PSD (well the check for much stricter PD)
-print(np.all(np.linalg.eigvals(K) > 0))
-
 # recover RLS nystrom sampling
 _lambda = 0.01
 delta = random.uniform(0.0, 1.0/8)

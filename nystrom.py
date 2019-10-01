@@ -56,11 +56,11 @@ def rls_sampling(X, K, _lambda, s, delta):
     SKS = S.T.dot(K.dot(S))
     return KS, SKS
 
-def recursive_rls(X, K, _lambda, s, delta):
+def recursive_rls(X, K_func, _lambda, s, delta):
     """
     input:
     X - data
-    K - kernel
+    K_func - kernel function
     _lambda - ridge parameter
     s - number of samples used to reconstruct Nystrom
     delta - failure probability
@@ -81,12 +81,15 @@ def recursive_rls(X, K, _lambda, s, delta):
     # compute sampling matrix
     S_bar = range(len(X_sampled))
     # recurse
-    S_tilde = recursive_rls(X_sampled, K, _lambda, s, delta)
+    S_tilde = recursive_rls(X_sampled, K_func, _lambda, s, delta)
     # compute S_hat
     S_hat = S_bar*S_tilde
     # compute li
-    S_hat = S_hat.T # conform to paper's representation
-    li = np.diagonal((3/2*_lambda)*(K - K*S_hat*np.linalg.inv(S_hat.T*K*S_hat+_lambda*np.eye(K.shape[0]))*S_hat.T*K))
+    K = K_func(X)
+    SKS = S_hat.T.dot(K.dot(S_hat))
+    SK = S_hat.T.dot(K)
+    KS = K.dot(S)
+    li = np.diagonal((3/(2*_lambda))*(K - (KS.dot(np.linalg.inv(SKS-_lambda*np.eye(SKS.shape[0])))).dot(SK)))
     # compute pi
     sum_li = np.sum(li)
     pi = np.minimum(1, li*16*np.log(sum_li/delta))
