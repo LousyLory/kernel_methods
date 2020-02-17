@@ -22,7 +22,7 @@ def compute_squared_distance_no_loops(X, Y):
     dist_mat = dists - sum3
     return dist_mat
 
-def random_data(N, kernel_type="rbf"):
+def random_data(N, kernel_type="rbf", sigma=0.1):
     """
     input: 
     N - number of data points to generate
@@ -37,11 +37,11 @@ def random_data(N, kernel_type="rbf"):
     X = random.rand(N, dimension)
 
     # get a kernel matrix
-    K = compute_kernel(X, kernel_type)
+    K = compute_kernel(X, kernel_type, sigma)
 
     return X, K
 
-def compute_kernel(X, kernel_type="rbf"):
+def compute_kernel(X, kernel_type="rbf", sigma=0.1):
     """
     input:
     X - data
@@ -52,8 +52,6 @@ def compute_kernel(X, kernel_type="rbf"):
     """
     K = np.zeros((X.shape[0], X.shape[0]))
     if kernel_type == "rbf":
-        # choose a random sigma for now
-        sigma = 0.01
         # find the distance matrix
         dist_mat = compute_squared_distance_no_loops(X, X)
         # divide by 2*sigma^2
