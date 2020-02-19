@@ -5,6 +5,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import random as rnd
+from numpy import linalg as LA
 
 def compute_squared_distance_no_loops(X, Y):
     """
@@ -70,10 +71,22 @@ def recursiveNystrom(X, s, kernelFunc):
     # we need dagonal fo the whole kernel matrix
     kDiag = kernelFunc(X, list(range(n)), [])
 
-    # main recursion
+    # main recursion, unrolled for efficiency
     for l in range(nLevels, 0, -1):
         # indices of current uniform sample
         rIndCurr = np.random.permutation(lSize[l])
+        # build sampled kernel
+        KS = kernelFunc(X, rIndCurr, rInd)
+        SKS = KS[samp, :]
+        SKSn = np.shape(SKS)[0]
+
+        # optimal lambda for taking O(klogk) samples
+        if k >= SKSn:
+            # for the rare chance we take less than k samples in a round
+            _lambda = 10e-6
+            # don't set exactly to zero for stability issues
+        else:
+            _lambda = (np.sum(np.diag(SKS)*weights**2) - np.sum(np.abs(LA.eig().real)))/float(k)
 
     C = 0
     W = 0
@@ -106,7 +119,7 @@ def main():
     X = np.random.random((1000, 500))
     s = 40
     kernelFunc = kernelFunction
-    recursiveNystrom(X, s, kernelFunc)
+    C, W = recursiveNystrom(X, s, kernelFunc)
 
     return None
 
