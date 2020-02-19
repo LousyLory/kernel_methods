@@ -6,6 +6,27 @@ import numpy as np
 import matplotlib.pyplot as plt
 import random as rnd
 
+def compute_squared_distance_no_loops(X, Y):
+    """
+        input:
+        X - train_data
+        Y - test_data
+
+        output:
+        dist_mat - computed distance values
+    """
+    num_test = Y.shape[0]
+    num_train = X.shape[0]
+    dist_mat = np.zeros((num_test, num_train))
+
+    # compute distance
+    sum1 = np.sum(np.power(Y,2), axis=1)
+    sum2 = np.sum(np.power(X,2), axis=1)
+    sum3 = 2*np.dot(Y, X.T)
+    dists = sum1.reshape(-1,1) + sum2
+    dist_mat = dists - sum3
+    return dist_mat.T
+
 def recursiveNystrom(X, s, kernelFunc):
     # implements Algorithm 3 of paper https://arxiv.org/abs/1605.07583
     #
@@ -49,13 +70,17 @@ def recursiveNystrom(X, s, kernelFunc):
     # we need dagonal fo the whole kernel matrix
     kDiag = kernelFunc(X, list(range(n)), [])
 
+    # main recursion
+    for l in range(nLevels, 0, -1):
+        # indices of current uniform sample
+        rIndCurr = np.random.permutation(lSize[l])
 
     C = 0
     W = 0
     
     return C, W
 
-def kernelFunction(Data, rowInd, colInd, gamma=0.1, type="rbf"):
+def kernelFunction(Data, rowInd, colInd, gamma=0.1, _type_="rbf"):
     # a kernel generator: outputs the submatrix of the associated kernel 
     # with variance parameter.
     # input:
@@ -68,7 +93,13 @@ def kernelFunction(Data, rowInd, colInd, gamma=0.1, type="rbf"):
     # 
     # Ksub = Let K(i,j) = e^-(gamma*||X(i,:)-X(j,:)||^2). Then Ksub = 
     # K(rowInd,colInd). Or if colInd = [] then Ksub = diag(K)(rowInd).
-    
+
+    if _type_ == "rbf":
+        if not colInd:
+            Ksub = np.ones((len(rowInd)))
+        else:
+            Ksub = np.exp(-1*gamma*compute_squared_distance_no_loops(Data[rowInd, :], Data[colInd, :]))
+
     return None
 
 def main():
