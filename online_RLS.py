@@ -58,7 +58,8 @@ def online_RLS(x, X, KS, SKS, _iter, sample_indices, weight):
 
     # now compute the product finally (I think this needs optimization for not storing the n x n matrix, 
     # ask cameron about this)
-    prod = np.matmul(np.matmul(KS_new, inv_SKS_lambdaI), KS.T)[len(X), len(X)]
+    intermediate_prod = np.matmul(KS_new, inv_SKS_lambdaI)
+    prod = np.dot(intermediate_prod[-1, :], KS_new[-1, :])
 
     # rejection hypothesis
     levs = 3.0/(2.0*_lambda) * (1.0 - prod)
