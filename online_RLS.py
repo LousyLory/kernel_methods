@@ -39,7 +39,7 @@ def online_RLS(x, X, KS, SKS, _iter, sample_indices, weight):
     # set the parameter variables
     _lambda = 0.1
     eps = 0.5
-    #c = 8.0*np.log(d) / (np.log(2)*eps**2)
+    #c = 8.0*np.log(d) / (eps**2)
     c = 0.2
 
     # first pre sample
@@ -120,7 +120,23 @@ def expire(KS, SKS, sample_indices, weight, T, X, W, t):
     return KS, SKS, sample_indices, weight, T, X
 
 def downsample(KS, SKS, sample_indices, weight, X):
-    # MVP for thwe windowed algorithm
+    # MVP for the windowed algorithm
+    eps = 0.5
+    # c = ((3+eps)/(3*(eps**2))) * 2 * np.log(X.shape[1])
+    c = 0.2
+    KS_new = np.array([])
+    SKS_new = np.array([])
+    X_new = np.array([])
+    weight_new = []
+    sample_indices_new = []
+    for i in range(len(sample_indices)-1, -1, -1):
+        weight_new = weiht_new+[1]
+        sample_indices_new = sample_indices_new+[i]
+        xi = X[sample_indices[i]]
+        X_new = np.append(X_new, xi)
+        KS_new_col = kernelFunction(X_new, list(range(len(X_new))), [-1])
+        KS_new = np.append(KS_new, KS_new_col, axis=1)
+
     return KS, SKS, sample_indices, weight
 
 
