@@ -72,9 +72,9 @@ def recursiveNystrom(X, s, kernelFunc):
     kDiag = kernelFunc(X, list(range(n)), [])
 
     # main recursion, unrolled for efficiency
-    for l in range(nLevels, 0, -1):
+    for l in range(nLevels, -1, -1):
         # indices of current uniform sample
-        rIndCurr = np.random.permutation(lSize[l])
+        rIndCurr = np.random.permutation(int(lSize[l]))
         # build sampled kernel
         KS = kernelFunc(X, rIndCurr, rInd)
         SKS = KS[samp, :]
@@ -86,8 +86,16 @@ def recursiveNystrom(X, s, kernelFunc):
             _lambda = 10e-6
             # don't set exactly to zero for stability issues
         else:
-            _lambda = (np.sum(np.diag(SKS)*weights**2) - np.sum(np.abs(LA.eig().real)))/float(k)
-
+            _lambda = (np.sum(multiply(diag(SKS),weights ** 2)) - np.sum(np.abs(LA.eig(lambda x: np.multiply((dot(SKS,(np.multiply(x,weights)))),weights),SKSn,k)).real)) / k
+    
+        # compute and sample by lambda leverage scores
+        if l!= 0:
+            # on intermediate levels we independently sample each column
+            # by its leverage score. the sample size is sLevel in expectation
+            R = np.linalg.inv(SKS + np.diag(_lambda*weights**(-2)))
+            # max(0,.) helps avoid numerical issues, unnecessary in theory
+            levs = np.min(1,np.dot((1 / _lambda),np.max(0,(kDiag[rIndCurr] - np.sum(np.multiply((np.dot(KS,R)),KS),axis=1)))))
+            
     C = 0
     W = 0
     
@@ -108,12 +116,12 @@ def kernelFunction(Data, rowInd, colInd, gamma=0.1, _type_="rbf"):
     # K(rowInd,colInd). Or if colInd = [] then Ksub = diag(K)(rowInd).
 
     if _type_ == "rbf":
-        if not colInd:
+        if len(colInd) <= 0:
             Ksub = np.ones((len(rowInd)))
         else:
             Ksub = np.exp(-1*gamma*compute_squared_distance_no_loops(Data[rowInd, :], Data[colInd, :]))
 
-    return None
+    return Ksub
 
 def main():
     X = np.random.random((1000, 500))
