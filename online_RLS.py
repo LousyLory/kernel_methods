@@ -56,7 +56,8 @@ def online_RLS(x, X, KS, SKS, _iter, sample_indices, weight):
     SKS_lambdaI = SKS_new+_lambda*np.eye_like(SKS_new)
     inv_SKS_lambdaI = inv(SKS_lambdaI)
 
-    # now compute the product finally (I think this needs optimization for not storing the n x n matrix)
+    # now compute the product finally (I think this needs optimization for not storing the n x n matrix, 
+    # ask cameron about this)
     prod = np.matmul(np.matmul(KS_new, inv_SKS_lambdaI), KS.T)[len(X), len(X)]
 
     # rejection hypothesis
