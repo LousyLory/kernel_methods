@@ -124,11 +124,13 @@ def downsample(KS, SKS, sample_indices, weight, X):
     eps = 0.5
     # c = ((3+eps)/(3*(eps**2))) * 2 * np.log(X.shape[1])
     c = 0.2
+
     KS_new = np.array([])
     SKS_new = np.array([])
     X_new = np.array([])
     weight_new = []
     sample_indices_new = []
+
     for i in range(len(sample_indices)-1, -1, -1):
         weight_new = weiht_new+[1]
         sample_indices_new = sample_indices_new+[i]
