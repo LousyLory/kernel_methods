@@ -127,17 +127,13 @@ def downsample(KS, SKS, sample_indices, weight, X):
 
     KS_new = np.array([])
     SKS_new = np.array([])
-    X_new = np.array([])
     weight_new = []
     sample_indices_new = []
 
     for i in range(len(sample_indices)-1, -1, -1):
-        weight_new = weiht_new+[1]
-        sample_indices_new = sample_indices_new+[i]
-        xi = X[sample_indices[i]]
-        X_new = np.append(X_new, xi)
-        KS_new_col = kernelFunction(X_new, list(range(len(X_new))), [-1])
-        KS_new = np.append(KS_new, KS_new_col, axis=1)
+        current_ID = sample_indices[i]
+        sample_indices_new = sample_indices_new+[current_ID]
+
 
     return KS, SKS, sample_indices, weight
 
