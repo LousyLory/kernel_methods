@@ -62,7 +62,7 @@ def online_RLS(x, X, KS, SKS, _iter, sample_indices, weight):
     prod = np.dot(intermediate_prod[-1, :], KS_new[-1, :])
 
     # compute Kii
-    Kii = 1.0
+    Kii = kernelFunction(X, [-1], [-1])[0]
 
     # rejection hypothesis
     levs = 3.0/(2.0*_lambda) * (Kii - prod)
@@ -153,9 +153,9 @@ def downsample(KS, SKS, sample_indices, weight, X, _lambda_=0.1):
         inv_SKS_lambdaI = inv(SKS_lambdaI)
 
         intermediate_prod = np.matmul(KS_new, inv_SKS_lambdaI)
-        prod = np.dot(intermediate_prod[-1, :], KS_new[-1, :])
+        prod = np.dot(intermediate_prod[current_ID, :], KS_new[current_ID, :])
 
-        Kii = 1.0
+        Kii = kernelFunction(X, [current_ID], [current_ID])[0]
 
         levs = np.min(1, (1+eps)*(Kii - prod) / _lambda )
         pi = np.min(c*levs, 1.0)
