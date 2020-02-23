@@ -61,8 +61,11 @@ def online_RLS(x, X, KS, SKS, _iter, sample_indices, weight):
     intermediate_prod = np.matmul(KS_new, inv_SKS_lambdaI)
     prod = np.dot(intermediate_prod[-1, :], KS_new[-1, :])
 
+    # compute Kii
+    Kii = 1.0
+
     # rejection hypothesis
-    levs = 3.0/(2.0*_lambda) * (1.0 - prod)
+    levs = 3.0/(2.0*_lambda) * (Kii - prod)
     pi = np.min(c*levs, 1.0)
 
     si_choice = [0, 1]
@@ -72,7 +75,7 @@ def online_RLS(x, X, KS, SKS, _iter, sample_indices, weight):
     if si_final > 0:
         weight = weight+[si_final]
         sample_indices = sample_indices + [len(X)]
-        KS = KS_new
+        KS = np.copy(KS_new)
         KS = KS[:,-1] / si_final
         SKS = KS[sample_indices, :] * np.array(weight)
 
@@ -119,21 +122,66 @@ def expire(KS, SKS, sample_indices, weight, T, X, W, t):
 
     return KS, SKS, sample_indices, weight, T, X
 
-def downsample(KS, SKS, sample_indices, weight, X):
+def downsample(KS, SKS, sample_indices, weight, X, _lambda_=0.1):
     # MVP for the windowed algorithm
     eps = 0.5
     # c = ((3+eps)/(3*(eps**2))) * 2 * np.log(X.shape[1])
     c = 0.2
+    _lambda = _lambda_
 
     KS_new = np.array([])
     SKS_new = np.array([])
     weight_new = []
     sample_indices_new = []
 
+    rev_KS = np.array([])
+    rev_SKS = np.array([])
+    rev_weight = []
+    rev_sample_indices = []
+
     for i in range(len(sample_indices)-1, -1, -1):
         current_ID = sample_indices[i]
         sample_indices_new = sample_indices_new+[current_ID]
+        weight_new = weight_new+[1]
 
+        KS_new_col = kernelFunction(X, list(range(len(X_new))), [current_ID])
+        KS_new = np.append(KS_new, KS_new_col, axis=1)
+        
+        KS_new = KS_new*np.sqrt(np.array(weight_new))
+        SKS_new = KS_new[sample_indices_new, :]*np.array(weight_new)
+        SKS_lambdaI = SKS_new+_lambda*np.eye_like(SKS_new)
+        inv_SKS_lambdaI = inv(SKS_lambdaI)
+
+        intermediate_prod = np.matmul(KS_new, inv_SKS_lambdaI)
+        prod = np.dot(intermediate_prod[-1, :], KS_new[-1, :])
+
+        Kii = 1.0
+
+        levs = np.min(1, (1+eps)*(Kii - prod) / _lambda )
+        pi = np.min(c*levs, 1.0)
+
+        si_choice = [0,1]
+        si_final = np.random.choice(si_choice, 1, p=[1-pi, pi])
+        si_final = si_final[0] / np.sqrt(pi)
+
+        if si_final > 0:
+            rev_weight = rev_weight+[si_final]
+            rev_sample_indices = rev_sample_indices + [current_ID]
+            rev_KS = np.copy(KS_new)
+            rev_KS = rev_KS[:, - 1] / si_final
+            rev_SKS = KS[rev_sample_indices, :] * np.array(rev_weight)
+        else:
+            KS_new = np.array([])
+            SKS_new = np.array([])
+            weight_new = []
+            sample_indices_new = []
+    # end for
+
+    #convert to normal ordering
+    KS = np.flip(rev_KS, axis = 1)
+    SKS = np.flip(np.flip(rev_SKS, axis=1), axis = 0)
+    weight = list(np.flip(rev_weight))
+    sample_indices = list(np.flip(sample_indices))
 
     return KS, SKS, sample_indices, weight
 
